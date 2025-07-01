@@ -1,0 +1,4 @@
+apiVersion: v2
+name: dummy-app
+description: Helm chart for Nginx frontend + Node.js backend
+version: 0.1.0
