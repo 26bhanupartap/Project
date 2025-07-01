@@ -1,0 +1,52 @@
+Workflow:
+
+Developer Push Code: Developers write code for their Node.js frontend and backend microservices and push changes to the central version control repository (Azure Repos or GitHub) through Pull Requests (PRs).
+
+Azure DevOps Pipelines - CI Pipeline (Build):
+
+Trigger: A push to the repository (after PR merge) triggers the Azure Build Pipeline (CI pipeline).
+
+Build Docker Images: The build pipeline compiles the Node.js applications and uses their respective Dockerfiles to build Docker images.
+
+Publish Images to ACR: These Docker images are then pushed to the Azure Container Registry (ACR), which was previously set up.
+
+Publish Build Artifacts: The pipeline also publishes Kubernetes manifest files (if not using Helm exclusively) and Helm charts as build artifacts. These artifacts will be consumed by the release pipeline.
+
+Azure DevOps Pipelines - CD Pipeline (Release):
+This pipeline handles the deployment to various environments and is triggered by the completion of the CI build pipeline.
+
+Stage: Deploy Infrastructure: This stage focuses on setting up or updating the core Azure infrastructure.
+
+Download Artifacts: The release pipeline first downloads the artifacts published by the build pipeline, which include the Terraform code for AKS.
+
+ARM Template: Create Resource Group: An ARM template is used to create the necessary Azure Resource Group for the deployment.
+
+ARM Template: Create ACR: Another ARM template creates the Azure Container Registry (ACR) if it doesn't already exist.
+
+Terraform Init: Terraform initializes the working directory, configuring the backend service connection (e.g., Azure Storage Account) to store the Terraform state file.
+
+Terraform Validate: Terraform validates the configuration files to ensure syntax correctness.
+
+Terraform Plan: Terraform generates an execution plan, detailing the infrastructure changes to be applied. This can be reviewed before actual application.
+
+Terraform Apply: Terraform applies the planned changes to create or update the Azure Kubernetes Service (AKS) cluster. This step can be configured with auto-approve or manual approvers.
+
+AKS Cluster: The AKS cluster is provisioned with at least 2 nodes, enabled monitoring and logging (via Log Analytics Workspace), and configured to use managed identities for secure access to other Azure services like ACR.
+
+Virtual Network & Subnet: The AKS cluster is deployed into a pre-existing Virtual Network and Subnet, which is assumed to be provided by a central team.
+
+Log Analytics Workspace: A Log Analytics Workspace is integrated with AKS for monitoring and logging.
+
+Stages: Deploy Application (Dev, QA, Prod): These are sequential stages for deploying the microservices to different environments.
+
+Download Artifacts: Each stage will download the Helm charts and Kubernetes manifests published earlier.
+
+Helm Deploy to AKS: The Helm deploy to AKS function (using the HelmDeploy task in Azure DevOps) is used in each stage to deploy the frontend and backend services onto the AKS cluster.
+
+Environment-Specific Overrides: Each environment stage (Dev, QA, Prod) uses specific values-env.yaml files (or inline overrideValues in the pipeline) to customize the Helm chart deployment. This allows for different replica counts, service types (e.g., LoadBalancer for frontend, ClusterIP for backend), resource limits, or other configurations per environment.
+
+Frontend Service: The Node.js frontend web application is deployed and exposed to the internet, typically using an Azure Load Balancer.
+
+Backend Service: The Node.js backend API service is deployed as an internal service, accessible only by the frontend service within the AKS cluster.
+
+Approvals: QA and Prod stages usually have manual approvals configured in Azure DevOps Environments to ensure quality gates are met before promotion.
