@@ -1,5 +1,5 @@
 resource "azurerm_log_analytics_workspace" "log_analytics" {
-  name                = "${var.aks_cluster_name}-log"
+  name                = "var.aks_cluster_name-loganalytics"
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "PerGB2018"
@@ -22,11 +22,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type = "SystemAssigned"
   }
 
-  addon_profile {
-    oms_agent {
-      enabled                    = true
-      log_analytics_workspace_id = azurerm_log_analytics_workspace.log_analytics.id
-    }
+  oms_agent {
+    enabled = true
+    log_analytics_workspace_id = azurerm_log_analytics_workspace.log_analytics.id
   }
 
   network_profile {
