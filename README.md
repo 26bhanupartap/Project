@@ -15,6 +15,7 @@
 - Manifest files for k8s
 - Service connections for ACR, AKS
 
+
 # Steps for setting up Infra
 1. First we will run infra pipeline to create RG and ACR using ARM templates. And we will publish the Artifact in default folder which will include the terraform code.
 2. Then we will create a release pipeline, in which we will add steps/tasks to create a AKS cluster.
